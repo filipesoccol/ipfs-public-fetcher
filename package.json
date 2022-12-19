@@ -1,6 +1,6 @@
 {
   "name": "ipfs-public-fetcher",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Components core for fetch and display IPFS content using public gateways.",
   "main": "index.js",
   "scripts": {

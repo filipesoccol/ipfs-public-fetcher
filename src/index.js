@@ -1,5 +1,5 @@
 import * as isIPFS from 'is-ipfs';
-import domains from './domains.js'
+import sourceDomains from './domains.js'
 
 // List of gateways that successfully responded
 let gatewaysFetched = []
@@ -9,8 +9,9 @@ let ipfsConnected = false
 export const Initialize = (customDomains) => {
     gatewaysFetched = []
     ipfsConnected = false
-    console.log('-- IPFS Starting connection process --')
-    (customDomains ? customDomains : domains).forEach( gatewayPath => {
+    console.log('-- IPFS Starting connection process --');
+    const domains = customDomains ? customDomains : sourceDomains
+    domains.forEach( gatewayPath => {
         const dateBefore = Date.now()
         // Test each gateway against a 5sec timeout
         Promise.race([
@@ -80,19 +81,25 @@ const persistentFetch = async (digested, path) => {
     let found = undefined;
     while(!found && tries < 20){
         // Controls Fetch for abort in case of failure or success
-        const controllers = [new AbortController(), new AbortController(), new AbortController(), new AbortController()];
+        const controllers = [
+            new AbortController(),
+            new AbortController(),
+            new AbortController(),
+            new AbortController()
+        ];
         // Se a timeout for retry
         let timeout
         // Racing the promises for tries
         await Promise.race(
             // Grab the first 3 best gateways
-            gatewaysFetched.slice(0,3).map( (gateway, idx) => {
+            gatewaysFetched.slice(0,2).map( (gateway, idx) => {
                 // Try grab the content from one of the gateways
                 return resolvePath(gateway, digested, controllers, idx)
-            }).concat(() => {
-                // Concat the Path itself as a fallback
-                return resolvePath(null, digested, controllers, 3)
             })
+            // .concat(() => {
+            //     // Concat the Path itself as a fallback
+            //     return resolvePath(null, path, controllers, 3)
+            // })
             .concat(new Promise((resolve) => {
                 // Concat a timeout promise in case any of the previous resolves correctly
                 timeout = setTimeout(() => resolve(), 5000)
@@ -175,7 +182,7 @@ export const FetchJSON = async (path) => {
     // Before fetch wait for gateway connections
     await new Promise( resolve => { waitLoop(resolve) })
     // Try repeatedly to fetch for document on multiple gateways
-    const newPath = await persistentFetch(digested, path, 'json')
+    const newPath = await persistentFetch(digested, path)
     return new Promise( (resolve) => {
         fetch(newPath)
         .then( (r) => r.json())

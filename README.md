@@ -1,5 +1,10 @@
-# IPFS Public Fetcher
-![vue-ipfs-components-logo](https://bafybeih2qkxommebznq6zavgqltidbmszz5j6tssoq75coj2yjg554mldm.ipfs.w3s.link/ipfs.png)
+<p align="center">
+  <a href="https://js.ipfs.io" title="JS IPFS">
+    <img src="https://bafybeierg5lmdqqi65o4izniyggc5i3gmr4js62mldakrprgrlhcdu35oi.ipfs.w3s.link/ipfs_logo.png" alt="IPFS logo" width="244" />
+  </a>
+</p>
+
+<h3 align="center">IPFS Public Gateway Fetcher</h3>
 
 ### Load any IPFS content from the fastest gateway available just passing a valid path.
 
@@ -15,12 +20,12 @@ The service to fetch Images and JSON(Metadata) files work decoupling the URL/CID
 
 ## Sources for media supported includes:
 
-[x] Path with CIDv0 only: Qm...
-[x] Path with CIDv1 only: bafy...
-[x] IPFS protocol path: ipfs://...
-[x] Pre-filled IPFS gateway path: https://ipfs.io/ipfs/...
-[x] CIDv1 with subdomain path: https://bafy.../2.png
-[x] Non IPFS URLs (Will fetch url itself.)
+- [x] Path with CIDv0 only: Qm...
+- [x] Path with CIDv1 only: bafy...
+- [x] IPFS protocol path: ipfs://...
+- [x] Pre-filled IPFS gateway path: https://ipfs.io/ipfs/...
+- [x] CIDv1 with subdomain path: https://bafy.../2.png
+- [x] Non IPFS URLs (Will fetch url itself.)
 
 ## Installation
 
