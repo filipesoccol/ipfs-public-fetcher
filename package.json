@@ -1,0 +1,26 @@
+{
+  "name": "ipfs-public-fetcher",
+  "version": "0.1.0",
+  "description": "Components core for fetch and display IPFS content using public gateways.",
+  "main": "index.js",
+  "scripts": {
+    "compile": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/filipesoccol/ipfs-public-fetcher.git"
+  },
+  "keywords": [
+    "ipfs",
+    "gateway"
+  ],
+  "author": "@filipesoccol",
+  "license": "MIT",
+  "dependencies": {
+    "is-ipfs": "^7.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.4"
+  }
+}
