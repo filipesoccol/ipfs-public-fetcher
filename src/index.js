@@ -84,15 +84,14 @@ const persistentFetch = async (digested, path) => {
         const controllers = [
             new AbortController(),
             new AbortController(),
-            new AbortController(),
             new AbortController()
         ];
         // Se a timeout for retry
         let timeout
         // Racing the promises for tries
-        await Promise.race(
+        await Promise.any(
             // Grab the first 3 best gateways
-            gatewaysFetched.slice(0,2).map( (gateway, idx) => {
+            gatewaysFetched.slice(0,3).map( (gateway, idx) => {
                 // Try grab the content from one of the gateways
                 return resolvePath(gateway, digested, controllers, idx)
             })
