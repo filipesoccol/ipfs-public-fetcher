@@ -15,7 +15,7 @@ export const Initialize = (customDomains) => {
         const dateBefore = Date.now()
         // Test each gateway against a 5sec timeout
         Promise.race([
-            fetch(gatewayPath.replace(':hash', 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'), {timeout:500, mode:'cors'}),
+            fetch(gatewayPath.replace(':hash', 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'), {timeout:500, mode:'cors', method:'HEAD'}),
             new Promise( (resolve, reject) => { setTimeout(reject, 5000) })
         ]).then( (response) => {
             if (response.ok) {
@@ -41,18 +41,32 @@ export const Initialize = (customDomains) => {
     })
 }
 
+// Wait for gateway connections before try fetch any content 
+const waitLoop = (callback) => {
+    // If connected return
+    if (ipfsConnected) {
+        callback()
+        return
+    }
+    // Try again if not connected.
+    setTimeout(() => {
+        waitLoop(callback)
+    }, 100)
+}
+
+// Grab a URL and return 
 const digestPath = (url) => {
     let path = ''
     try {
         // Try to geth only the pathname for the URL
         const urlObject = new URL(url);
 
-        // If is a IPFS protocol address
+        // If is a IPFS protocol address + CidV0
         // ipfs://QmXNwZhBAG9Pw9nBAHGrKMe56U6Vz9K7SxX4Tbcksp6Fsn/121.gif
         if (urlObject.protocol == 'ipfs:') {
             path = url.substring(7)
-            // If it is a base32 subdomain path
-            // https://bafy...betwe.ipfs.w3s.link/121.gif
+        // If it is a base32 subdomain path
+        // https://bafy...betwe.ipfs.w3s.link/121.gif
         } else if (isIPFS.base32cid(urlObject.host.split('.')[0])) {
             path = urlObject.host.split('.')[0] + urlObject.pathname
         } else {
@@ -80,12 +94,6 @@ const persistentFetch = async (digested, path) => {
     let tries = 0;
     let found = undefined;
     while(!found && tries < 20){
-        // Controls Fetch for abort in case of failure or success
-        const controllers = [
-            new AbortController(),
-            new AbortController(),
-            new AbortController()
-        ];
         // Se a timeout for retry
         let timeout
         // Racing the promises for tries
@@ -93,12 +101,8 @@ const persistentFetch = async (digested, path) => {
             // Grab the first 3 best gateways
             gatewaysFetched.slice(0,3).map( (gateway, idx) => {
                 // Try grab the content from one of the gateways
-                return resolvePath(gateway, digested, controllers, idx)
+                return resolvePath(gateway, digested, idx)
             })
-            // .concat(() => {
-            //     // Concat the Path itself as a fallback
-            //     return resolvePath(null, path, controllers, 3)
-            // })
             .concat(new Promise((resolve) => {
                 // Concat a timeout promise in case any of the previous resolves correctly
                 timeout = setTimeout(() => resolve(), 5000)
@@ -106,15 +110,10 @@ const persistentFetch = async (digested, path) => {
         ).then( (res) => {
             // Start clearing the timeout
             clearTimeout(timeout);
-            // Then abort each one of the controllers except for the sucessfull index
-            controllers.forEach( (c, idx) => { 
-                if(idx != res.idx) c.abort()
-            })
             // In case of a successful returned result, set found variable
             if (res) found = res.value;
         }).catch(() => {
             clearTimeout(timeout);
-            controllers.forEach( (c) => c.abort())
         })
         if (!found){
             // In case of nothing found. Try again and increase the counter
@@ -128,11 +127,11 @@ const persistentFetch = async (digested, path) => {
     return path
 }
 
-const resolvePath = (gateway, digested, controllers, idx) => {
+const resolvePath = (gateway, digested, idx) => {
     return new Promise( (resolve,reject) => {
         // Fetch digested path from best gateways
         const gatewayPath = gateway ? gateway.path.replace(':hash', digested) : digested
-        fetch(gatewayPath, {signal: controllers[idx].signal})
+        fetch(gatewayPath, {method: 'HEAD'})
         .then( (r) => {
             // If fetched return as soon as possible
             if (r.ok) {
@@ -151,44 +150,7 @@ const resolvePath = (gateway, digested, controllers, idx) => {
     })
 }
 
-// Wait for gateway connections before try fetch any content 
-const waitLoop = (callback) => {
-    // If connected return
-    if (ipfsConnected) {
-        callback()
-        return
-    }
-    // Try again if not connected.
-    setTimeout(() => {
-        waitLoop(callback)
-    }, 100)
-}
-
-// Fetch a JSON documnet from fastest IPFS gateways connected
-export const FetchJSON = async (path) => {
-    let digested = ''
-    // Try to grab IPFS Cid from 
-    try { digested = digestPath(path) }
-    catch (err) {
-        console.error(err)
-        // In case of fail to digest use same path to fetch
-        return new Promise( (resolve) => {
-            fetch(path)
-            .then( (r) => r.json())
-            .then( doc => resolve(doc))
-        })
-    }
-    // Before fetch wait for gateway connections
-    await new Promise( resolve => { waitLoop(resolve) })
-    // Try repeatedly to fetch for document on multiple gateways
-    const newPath = await persistentFetch(digested, path)
-    return new Promise( (resolve) => {
-        fetch(newPath)
-        .then( (r) => r.json())
-        .then( doc => resolve(doc))
-    })
-}
-
+// Fetch fastest IPFS gateway url for the desired content 
 export const FetchContent = async (path) => {
     let digested = ''
     try { digested = digestPath(path) }
@@ -200,4 +162,14 @@ export const FetchContent = async (path) => {
     // Wait connection to be completed before try to fetch 
     await new Promise( resolve => { waitLoop(resolve) })
     return await persistentFetch(digested, path, 'path')
+}
+
+// Fetch a JSON formatted doc from fastest IPFS gateways connected
+export const FetchJSON = async (path) => {
+    const newPath = await FetchContent(path)
+    return new Promise( (resolve) => {
+        fetch(newPath)
+        .then( (r) => r.json())
+        .then( doc => resolve(doc))
+    })
 }

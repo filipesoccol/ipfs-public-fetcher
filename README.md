@@ -27,6 +27,11 @@ The service to fetch Images and JSON(Metadata) files work decoupling the URL/CID
 - [x] CIDv1 with subdomain path: https://bafy.../2.png
 - [x] Non IPFS URLs (Will fetch url itself.)
 
+## Roadmap to Beta
+- [ ] Only uses subdomain path to fetch content from gateways (CidV1)
+- [ ] Improve conditions to consider IPFS connected
+- [ ] Improve conditions to discard a connected gateway
+
 ## Installation
 
 First install package on your project:
@@ -74,3 +79,5 @@ const contentPath = await IPFSFetcher.FetchContent('bafybe...sk3m')
 ## References:
 
 - Protocol-Labs public gateway list: [Website](https://ipfs.github.io/public-gateway-checker/) / [Repo](https://github.com/ipfs/public-gateway-checker/blob/master/src/gateways.json)
+
+- Consensys article related to Gateways security: [Link](https://consensys.net/diligence/blog/2021/06/ipfs-gateway-security/)
