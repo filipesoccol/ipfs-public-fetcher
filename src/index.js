@@ -125,14 +125,12 @@ const resolvePath = (gateway, digested, idx) => {
 
 // Fetch fastest IPFS gateway url for the desired content 
 export const FetchContent = async (path) => {
-    console.log('PATH:', path)
     let digested = Utilities.digestPath(path)
     if (!digested.isIPFS){
         // In case of fail to digest use same path to fetch
         console.log('Not an IPFS valid path:', path)
         return path
     }
-    console.log(digested)
     // Wait connection to be completed before try to fetch 
     await new Promise( resolve => { waitLoop(resolve) })
     return await persistentFetch(digested.cid+digested.subpath, path)
