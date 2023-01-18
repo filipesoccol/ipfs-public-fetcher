@@ -1,25 +1,34 @@
 import * as isIPFS from 'is-ipfs';
 import sourceDomains from './domains.js'
+import * as Utilities from './utilities'
 
 // List of gateways that successfully responded
 let gatewaysFetched = []
 // True when sucessfully connected with at least two gateways
 let ipfsConnected = false
 
-export const Initialize = (customDomains) => {
+export const Initialize = async (customDomains, verbose) => {
     gatewaysFetched = []
+    //verbose = true
     ipfsConnected = false
-    console.log('-- IPFS Starting connection process --');
+    if (verbose) console.log('-- IPFS Starting connection process --');
     const domains = customDomains ? customDomains : sourceDomains
     domains.forEach( gatewayPath => {
         const dateBefore = Date.now()
         // Test each gateway against a 5sec timeout
-        Promise.race([
-            fetch(gatewayPath.replace(':hash', 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'), {timeout:500, mode:'cors', method:'HEAD'}),
+        Promise.any([
+            fetch(gatewayPath.replace(':hash', 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'), {timeout:5000, method:'HEAD'}),
             new Promise( (resolve, reject) => { setTimeout(reject, 5000) })
         ]).then( (response) => {
-            if (response.ok) {
-                return response.text();
+            // Only accept Subdomain paths 
+            //response.body.text().then(res => console.log)
+            if (
+                // Fethc returned successfully
+                response.ok &&
+                // In case of customDomains IPFSSubdomain security verification is disabled
+                customDomains ? true : isIPFS.ipfsSubdomain(response.url)
+            ) {
+                return;
             } else {
                 throw Error(response.statusText);
             }
@@ -31,12 +40,12 @@ export const Initialize = (customDomains) => {
             console.log('Gateway connected: ', gatewayPath)
             // If more than 3 gateways have succeded, then consider IPFS connected and ready
             if (gatewaysFetched.length > 3 && !ipfsConnected) {
-                console.log('-- IPFS Connected to enough gateways --')
+                if (verbose) console.log('-- IPFS Connected to enough gateways --')
                 ipfsConnected = true
             }
         })
         .catch( (err) => {
-            console.log('Failed to fetch gateway.')
+            if (verbose) console.log('Failed to fetch gateway or Path based Gateway')
         })
     })
 }
@@ -52,42 +61,6 @@ const waitLoop = (callback) => {
     setTimeout(() => {
         waitLoop(callback)
     }, 100)
-}
-
-// Grab a URL and return 
-const digestPath = (url) => {
-    let path = ''
-    try {
-        // Try to geth only the pathname for the URL
-        const urlObject = new URL(url);
-
-        // If is a IPFS protocol address + CidV0
-        // ipfs://QmXNwZhBAG9Pw9nBAHGrKMe56U6Vz9K7SxX4Tbcksp6Fsn/121.gif
-        if (urlObject.protocol == 'ipfs:') {
-            path = url.substring(7)
-        // If it is a base32 subdomain path
-        // https://bafy...betwe.ipfs.w3s.link/121.gif
-        } else if (isIPFS.base32cid(urlObject.host.split('.')[0])) {
-            path = urlObject.host.split('.')[0] + urlObject.pathname
-        } else {
-            // Or in case of a simple gateway, remove the gateway part.
-            path = urlObject.pathname
-        }
-    } catch { 
-        // Not a full URL
-        path = url
-    }
-
-    // https://github.com/ipfs-shipyard/is-ipfs
-    // In case of a path starting with /ipfs/Qm.... remove the /ipfs
-    if (isIPFS.ipfsPath(path)) return path.substring(6)
-    // In case of a path containing only the cid+subpath
-    if (isIPFS.cidPath(path)) return path
-    // In case of cid
-    if (isIPFS.cid(path)) return path
-    // In case of none of the above, fail.
-
-    throw new Error('Not a valid IPFS URL')
 }
 
 const persistentFetch = async (digested, path) => {
@@ -152,16 +125,17 @@ const resolvePath = (gateway, digested, idx) => {
 
 // Fetch fastest IPFS gateway url for the desired content 
 export const FetchContent = async (path) => {
-    let digested = ''
-    try { digested = digestPath(path) }
-    catch {
+    console.log('PATH:', path)
+    let digested = Utilities.digestPath(path)
+    if (!digested.isIPFS){
         // In case of fail to digest use same path to fetch
         console.log('Not an IPFS valid path:', path)
         return path
     }
+    console.log(digested)
     // Wait connection to be completed before try to fetch 
     await new Promise( resolve => { waitLoop(resolve) })
-    return await persistentFetch(digested, path, 'path')
+    return await persistentFetch(digested.cid+digested.subpath, path)
 }
 
 // Fetch a JSON formatted doc from fastest IPFS gateways connected

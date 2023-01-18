@@ -28,7 +28,8 @@ The service to fetch Images and JSON(Metadata) files work decoupling the URL/CID
 - [x] Non IPFS URLs (Will fetch url itself.)
 
 ## Roadmap to Beta
-- [ ] Only uses subdomain path to fetch content from gateways (CidV1)
+- [x] Only uses gateways path to fetch content (CidV1)
+- [ ] Convert any CIDv0 to V1 and fethc using subdomains 
 - [ ] Improve conditions to consider IPFS connected
 - [ ] Improve conditions to discard a connected gateway
 
@@ -53,7 +54,7 @@ First is needed to initialze the package to connect peers:
 - customDomains: A object or module containing a list of domains.
 ```
 const domains = [
-    "https://ipfs.io/ipfs/:hash",
+  "https://ipfs.io/ipfs/:hash",
 	"https://dweb.link/ipfs/:hash",
 ]
 
