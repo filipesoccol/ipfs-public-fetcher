@@ -1,8 +1,8 @@
 {
   "name": "ipfs-public-fetcher",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Components core for fetch and display IPFS content using public gateways.",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "compile": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
