@@ -1,11 +1,13 @@
 {
   "name": "ipfs-public-fetcher",
-  "version": "0.1.8",
+  "version": "0.1.10",
   "description": "Components core for fetch and display IPFS content using public gateways.",
   "source": "src/index.ts",
+  "main": "src/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "/dist"
+    "/dist",
+    "/src"
   ],
   "scripts": {
     "compile": "tsc",
