@@ -1,4 +1,4 @@
-import * as isIPFS from 'is-ipfs';
+import {ipfsPath, cidPath, cid, base32cid} from 'is-ipfs';
 // REFERENCES:
 // https://github.com/ipfs-shipyard/is-ipfs
 
@@ -47,13 +47,13 @@ export const digestPath = (url) => {
         }
     }
     // IPFS Path starting with /ipfs/Qm.... remove the /ipfs
-    if (isIPFS.ipfsPath(url)) return {
+    if (ipfsPath(url)) return {
         cid: url.substring(6),
         subpath: '',
         isIPFS: true
     }
     // In case of a path containing CID+subpath
-    if (isIPFS.cidPath(url)) {
+    if (cidPath(url)) {
         const res = url.match(cidRegex);
         return {
             cid:res[1],
@@ -71,13 +71,13 @@ export const digestPath = (url) => {
         }
     }
     // In case of a single CID
-    if (isIPFS.cid(url)) return {
+    if (cid(url)) return {
         cid:url,
         subpath:'',
         isIPFS: true
     }
     // In case of a single CID
-    if (isIPFS.base32cid(url)) return {
+    if (base32cid(url)) return {
         cid:url,
         subpath:'',
         isIPFS: true
