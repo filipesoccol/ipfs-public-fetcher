@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 exports.FetchJSON = exports.FetchContent = exports.Initialize = void 0;
-var domains_js_1 = require("./domains.js");
+var domains_1 = require("./domains");
 var Utilities = require("./utilities");
 var instance = undefined;
 var Initialize = function (options) { return __awaiter(void 0, void 0, void 0, function () {
@@ -47,6 +47,19 @@ var Initialize = function (options) { return __awaiter(void 0, void 0, void 0, f
     });
 }); };
 exports.Initialize = Initialize;
+// Wait for gateway connections before try fetch any content 
+var waitLoop = function (callback) {
+    // If connected return
+    if (instance === null || instance === void 0 ? void 0 : instance.ipfsConnected) {
+        callback();
+        return;
+    }
+    // Try again if not connected.
+    setTimeout(function () {
+        if (instance)
+            waitLoop(callback);
+    }, 100);
+};
 var IPFSFetcher = /** @class */ (function () {
     function IPFSFetcher(options) {
         var _this = this;
@@ -54,19 +67,19 @@ var IPFSFetcher = /** @class */ (function () {
         this.ipfsConnected = false;
         // True when verbosity is enabled to check errors
         this.verbose = false;
-        if (options.verbose)
+        this.gatewaysFetched = [];
+        if (options === null || options === void 0 ? void 0 : options.verbose)
             this.verbose = true;
         if (this.verbose)
             console.log('-- IPFS Starting connection process --');
-        var domains = options.customDomains ? options.customDomains : domains_js_1["default"];
+        var domains = (options === null || options === void 0 ? void 0 : options.customDomains) ? options.customDomains : domains_1["default"];
         domains.forEach(function (gatewayPath) {
             var dateBefore = Date.now();
             // Test each gateway against a 5sec timeout
             Promise.any([
-                fetch(gatewayPath.replace(':hash', 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'), { mode: 'no-cors', method: 'HEAD' }),
+                fetch(gatewayPath.replace(':hash', 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'), { mode: 'cors', method: 'HEAD' }),
                 new Promise(function (resolve, reject) { setTimeout(reject, 5000); })
             ]).then(function (response) {
-                //response.body.text().then(res => console.log)
                 if (
                 // Fetch returned successfully
                 response.ok
@@ -84,7 +97,8 @@ var IPFSFetcher = /** @class */ (function () {
                 // Concat the new fetched gateway and make a fester response sort
                 _this.gatewaysFetched = _this.gatewaysFetched.concat({ path: gatewayPath, errors: 0, response: Date.now() - dateBefore })
                     .sort(function (a, b) { return a.response - b.response; });
-                console.log('Gateway connected: ', _this.gatewaysFetched.length, '-', gatewayPath);
+                if (_this.verbose)
+                    console.log('Gateway connected: ', _this.gatewaysFetched.length, '-', gatewayPath);
                 // If more than 3 gateways have succeded, then consider IPFS connected and ready
                 if (_this.gatewaysFetched.length > 1 && !_this.ipfsConnected) {
                     if (_this.verbose)
@@ -93,23 +107,10 @@ var IPFSFetcher = /** @class */ (function () {
                 }
             })["catch"](function (err) {
                 if (_this.verbose)
-                    console.log('Failed to fetch gateway or Path based Gateway');
+                    console.log('Failed to fetch gateway or Path based Gateway', gatewayPath);
             });
         });
     }
-    // Wait for gateway connections before try fetch any content 
-    IPFSFetcher.prototype.waitLoop = function (callback) {
-        var _this = this;
-        // If connected return
-        if (this.ipfsConnected) {
-            callback();
-            return;
-        }
-        // Try again if not connected.
-        setTimeout(function () {
-            _this.waitLoop(callback);
-        }, 100);
-    };
     return IPFSFetcher;
 }());
 // Try to fetch a content to via gateway path
@@ -117,7 +118,7 @@ var PathResolver = /** @class */ (function () {
     function PathResolver(digested, gateway) {
         this.controller = new AbortController();
         this.signal = this.controller.signal;
-        this.gatewayPath = gateway ? new URL(gateway.path.replace(':hash', digested)) : new URL(digested);
+        this.gatewayPath = gateway ? gateway.path.replace(':hash', digested) : digested;
     }
     PathResolver.prototype.fetch = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -135,7 +136,7 @@ var PathResolver = /** @class */ (function () {
                             throw new Error('Error fetching content');
                         })["catch"](function (err) {
                             if (err.name === 'AbortError') {
-                                console.log('Aborted request', _this.gateway.path);
+                                // console.log('Aborted request', this.gateway.path)
                             }
                             else if (_this.gateway && err.code && err.code != 20) {
                                 _this.gateway.errors++;
@@ -156,55 +157,58 @@ var PersistentFetcher = /** @class */ (function () {
     function PersistentFetcher(digested, originalPath) {
         this.digested = digested;
         this.originalPath = originalPath;
+        this.resolvers = [];
     }
     // Try persistently to fetch 
     PersistentFetcher.prototype.fetch = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var tries, found, _loop_1, this_1;
+            var _loop_1, this_1;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        tries = 0;
-                        found = undefined;
+                        this.tries = 0;
+                        this.found = undefined;
                         _loop_1 = function () {
-                            var timeout, resolverOriginalPath;
+                            var timeout;
                             return __generator(this, function (_b) {
                                 switch (_b.label) {
-                                    case 0:
-                                        resolverOriginalPath = new PathResolver(this_1.originalPath);
-                                        // Racing the promises for tries
-                                        return [4 /*yield*/, Promise.any(
-                                            // Grab the first 3 best gateways not errored
-                                            instance.gatewaysFetched
-                                                .filter(function (g) { return g.errors < 8; })
-                                                .slice(0, 3).map(function (gateway) {
-                                                // Try grab the content from one of the gateways
-                                                var resolver = new PathResolver(_this.digested, gateway);
-                                                return resolver.fetch();
-                                            })
-                                                .concat(resolverOriginalPath.fetch())
-                                                .concat(new Promise(function (resolve) {
-                                                // Concat a timeout promise in case any of the previous resolves correctly
-                                                timeout = setTimeout(function () { return resolve(null); }, 5000);
-                                            }))).then(function (res) {
-                                                // Start clearing the timeout
-                                                clearTimeout(timeout);
-                                                // In case of a successful returned result, set found variable
-                                                if (res)
-                                                    found = res;
-                                            })["catch"](function () {
-                                                clearTimeout(timeout);
-                                            })];
+                                    case 0: 
+                                    // Racing the promises for tries
+                                    return [4 /*yield*/, Promise.any(
+                                        // Grab the first 3 best gateways not errored
+                                        instance.gatewaysFetched
+                                            .filter(function (g) { return g.errors < 8; })
+                                            .slice(0, 3).map(function (gateway) {
+                                            // Try grab the content from one of the gateways
+                                            var resolver = new PathResolver(_this.digested, gateway);
+                                            _this.resolvers.push(resolver);
+                                            return resolver.fetch();
+                                        })
+                                            .concat(new Promise(function (resolve) {
+                                            // Concat a timeout promise in case any of the previous resolves correctly
+                                            timeout = setTimeout(function () {
+                                                resolve(null);
+                                            }, 1000);
+                                        }))).then(function (res) {
+                                            // Start clearing the timeout
+                                            _this.resolvers.forEach(function (r) { return r.kill(); });
+                                            clearTimeout(timeout);
+                                            // In case of a successful returned result, set found variable
+                                            if (res)
+                                                _this.found = res;
+                                        })["catch"](function () {
+                                            clearTimeout(timeout);
+                                        })];
                                     case 1:
                                         // Racing the promises for tries
                                         _b.sent();
-                                        if (!found) {
+                                        if (!this_1.found) {
                                             // In case of nothing found. Try again and increase the counter
-                                            tries++;
+                                            this_1.tries++;
+                                            clearTimeout(timeout);
                                             this_1.resolvers.forEach(function (r) { return r.kill(); });
-                                            if (tries >= 20)
-                                                console.error('Gave up trying to fetch', this_1.originalPath);
+                                            this_1.resolvers = [];
                                         }
                                         return [2 /*return*/];
                                 }
@@ -213,15 +217,15 @@ var PersistentFetcher = /** @class */ (function () {
                         this_1 = this;
                         _a.label = 1;
                     case 1:
-                        if (!(!found && tries < 5)) return [3 /*break*/, 3];
+                        if (!(!this.found && this.tries < 5)) return [3 /*break*/, 3];
                         return [5 /*yield**/, _loop_1()];
                     case 2:
                         _a.sent();
                         return [3 /*break*/, 1];
                     case 3:
                         // In case of successful found a resource, return it.
-                        if (found)
-                            return [2 /*return*/, found
+                        if (this.found)
+                            return [2 /*return*/, this.found
                                 // In case of a non successful fetch after 20 tries, return original path
                             ];
                         // In case of a non successful fetch after 20 tries, return original path
@@ -245,12 +249,12 @@ var FetchContent = function (path) { return __awaiter(void 0, void 0, void 0, fu
                     return [2 /*return*/, path];
                 }
                 // Wait connection to be completed before try to fetch 
-                return [4 /*yield*/, new Promise(function (resolve) { instance.waitLoop(resolve); })];
+                return [4 /*yield*/, new Promise(function (resolve) { waitLoop(resolve); })];
             case 1:
                 // Wait connection to be completed before try to fetch 
                 _a.sent();
                 fetcher = new PersistentFetcher(digested.cid + digested.subpath, path);
-                return [2 /*return*/];
+                return [2 /*return*/, fetcher.fetch()];
         }
     });
 }); };

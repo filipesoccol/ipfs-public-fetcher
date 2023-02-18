@@ -1,4 +1,4 @@
-import sourceDomains from './domains.js'
+import sourceDomains from './domains'
 import * as Utilities from './utilities'
 import {
     IPFSFetcherOptions,

@@ -75,6 +75,13 @@ var digestPath = function (url) {
             subpath: '',
             isIPFS: true
         };
+    // In case of a single CID
+    if (isIPFS.base32cid(url))
+        return {
+            cid: url,
+            subpath: '',
+            isIPFS: true
+        };
     // In case of none of the above, fail.
     return {
         cid: '',
