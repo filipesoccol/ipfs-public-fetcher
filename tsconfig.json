@@ -3,7 +3,10 @@
     "include": ["src/**/*"],
     "compilerOptions": {
       "lib": ["ESNext","dom"],
-      "moduleResolution": "node",
+      "module": "umd",
+      "paths": {
+        "is-ipfs": ["./node_modules/is-ipfs/dist/index.min.js"]
+      },
       // Generate d.ts files
       "declaration": true,
       // This compiler run should
