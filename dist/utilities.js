@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.digestPath = void 0;
-const index_min_js_1 = require("../node_modules/is-ipfs/dist/index.min.js");
+const is_ipfs_min_js_1 = require("./is-ipfs.min.js");
 // REFERENCES:
 // https://github.com/ipfs-shipyard/is-ipfs
 // Path gateway regex
@@ -44,14 +44,14 @@ const digestPath = (url) => {
         };
     }
     // IPFS Path starting with /ipfs/Qm.... remove the /ipfs
-    if ((0, index_min_js_1.ipfsPath)(url))
+    if ((0, is_ipfs_min_js_1.ipfsPath)(url))
         return {
             cid: url.substring(6),
             subpath: '',
             isIPFS: true
         };
     // In case of a path containing CID+subpath
-    if ((0, index_min_js_1.cidPath)(url)) {
+    if ((0, is_ipfs_min_js_1.cidPath)(url)) {
         const res = url.match(cidRegex);
         return {
             cid: res[1],
@@ -69,14 +69,14 @@ const digestPath = (url) => {
         };
     }
     // In case of a single CID
-    if ((0, index_min_js_1.cid)(url))
+    if ((0, is_ipfs_min_js_1.cid)(url))
         return {
             cid: url,
             subpath: '',
             isIPFS: true
         };
     // In case of a single CID
-    if ((0, index_min_js_1.base32cid)(url))
+    if ((0, is_ipfs_min_js_1.base32cid)(url))
         return {
             cid: url,
             subpath: '',
