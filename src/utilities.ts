@@ -1,4 +1,4 @@
-import {ipfsPath, cidPath, cid, base32cid} from 'is-ipfs';
+import {ipfsPath, cidPath, cid, base32cid} from '../node_modules/is-ipfs/dist/index.min.js';
 // REFERENCES:
 // https://github.com/ipfs-shipyard/is-ipfs
 

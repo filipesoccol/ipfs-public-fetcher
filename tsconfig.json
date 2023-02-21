@@ -1,23 +1,17 @@
 {
-    // Change this to match your project
-    "include": ["src/**/*"],
-    "compilerOptions": {
-      "lib": ["ESNext","dom"],
-      "module": "umd",
-      "paths": {
-        "is-ipfs": ["./node_modules/is-ipfs/dist/index.min.js"]
-      },
-      // Generate d.ts files
-      "declaration": true,
-      // This compiler run should
-      // only output d.ts files
-      // "emitDeclarationOnly": true,
-      // Types should go into this directory.
-      // Removing this would place the .d.ts files
-      // next to the .js files
-      "outDir": "dist",
-      // go to js file when using IDE functions like
-      // "Go to Definition" in VSCode
-      "declarationMap": true
-    }
+  "include": [
+    "src/**/*",
+    "node_modules/is-ipfs/dist/index.min.js"
+  ],
+  "compilerOptions": {
+    "lib": [
+      "ESNext",
+      "dom"
+    ],
+    "target": "es6",
+    "module": "commonjs",
+    "declaration": true,
+    "outDir": "dist",
+    "strict": false
   }
+}

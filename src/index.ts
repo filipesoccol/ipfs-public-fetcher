@@ -5,14 +5,14 @@ import {
     IPFSGateway
 } from './types'
 
-let instance:IPFSFetcher = undefined;
+let instance:IPFSFetcher|undefined = undefined;
 
 export const Initialize = async (options: IPFSFetcherOptions) => {
     instance = new IPFSFetcher(options);
 }
 
 // Wait for gateway connections before try fetch any content 
-const waitLoop = (callback) => {
+const waitLoop = (callback: (value?: unknown) => void) => {
     // If connected return
     if (instance?.ipfsConnected) {
         callback()
