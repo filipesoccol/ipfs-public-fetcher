@@ -1,17 +1,12 @@
 {
-  "include": [
-    "src/**/*",
-  ],
   "compilerOptions": {
     "lib": [
-      "ESNext",
+      "ES2021",
       "dom"
     ],
-    "target": "es6",
-    "module": "commonjs",
     "declaration": true,
+    "module": "ES2022",
+    "moduleResolution": "node",
     "outDir": "dist",
-    "strict": false,
-    "allowJs": true
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "ipfs-public-fetcher",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Components core for fetch and display IPFS content using public gateways.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -28,8 +28,10 @@
   ],
   "author": "@filipesoccol",
   "license": "MIT",
-  "devDependencies": {
-    "typescript": "^4.9.5",
+  "dependencies": {
     "is-ipfs": "^8.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5"
   }
 }

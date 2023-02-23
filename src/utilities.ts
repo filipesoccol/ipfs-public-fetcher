@@ -1,4 +1,4 @@
-import {ipfsPath, cidPath, cid, base32cid} from './is-ipfs.min.js';
+import { ipfsPath, cidPath, cid, base32cid } from 'is-ipfs';
 // REFERENCES:
 // https://github.com/ipfs-shipyard/is-ipfs
 
@@ -32,8 +32,8 @@ export const digestPath = (url) => {
     if (pathRegex.test(url)) {
         const res = url.match(pathRegex);
         return {
-            cid:res[2],
-            subpath:res[3] ? res[3] : '',
+            cid: res[2],
+            subpath: res[3] ? res[3] : '',
             isIPFS: true
         }
     }
@@ -41,8 +41,8 @@ export const digestPath = (url) => {
     if (subdomainRegex.test(url)) {
         const res = url.match(subdomainRegex);
         return {
-            cid:res[1],
-            subpath:res[4] ? res[4] : '',
+            cid: res[1],
+            subpath: res[4] ? res[4] : '',
             isIPFS: true
         }
     }
@@ -56,30 +56,30 @@ export const digestPath = (url) => {
     if (cidPath(url)) {
         const res = url.match(cidRegex);
         return {
-            cid:res[1],
-            subpath:res[2] ? res[2] : '',
+            cid: res[1],
+            subpath: res[2] ? res[2] : '',
             isIPFS: true
         }
     }
     // IPFS Protocol with/without subpath
-    if (ipfsProtocolRegex.test(url)){
+    if (ipfsProtocolRegex.test(url)) {
         const res = url.match(ipfsProtocolRegex)
         return {
-            cid:res[1],
-            subpath:res[2] ? res[2] : '',
+            cid: res[1],
+            subpath: res[2] ? res[2] : '',
             isIPFS: true
         }
     }
     // In case of a single CID
     if (cid(url)) return {
-        cid:url,
-        subpath:'',
+        cid: url,
+        subpath: '',
         isIPFS: true
     }
     // In case of a single CID
     if (base32cid(url)) return {
-        cid:url,
-        subpath:'',
+        cid: url,
+        subpath: '',
         isIPFS: true
     }
     // In case of none of the above, fail.
