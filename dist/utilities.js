@@ -1,4 +1,7 @@
-import { ipfsPath, cidPath, cid, base32cid } from 'is-ipfs';
+"use strict";
+exports.__esModule = true;
+exports.digestPath = void 0;
+var is_ipfs_1 = require("is-ipfs");
 // REFERENCES:
 // https://github.com/ipfs-shipyard/is-ipfs
 // Path gateway regex
@@ -21,7 +24,7 @@ var ipfsProtocolRegex = /^ipfs:\/\/([^/?#]+)([^?#]+)?/;
 // cid - if exists
 // subpath - if exists
 // isIPFS - true/false
-export var digestPath = function (url) {
+var digestPath = function (url) {
     // Gateway Path with/without subpaths
     if (pathRegex.test(url)) {
         var res = url.match(pathRegex);
@@ -41,14 +44,14 @@ export var digestPath = function (url) {
         };
     }
     // IPFS Path starting with /ipfs/Qm.... remove the /ipfs
-    if (ipfsPath(url))
+    if ((0, is_ipfs_1.ipfsPath)(url))
         return {
             cid: url.substring(6),
             subpath: '',
             isIPFS: true
         };
     // In case of a path containing CID+subpath
-    if (cidPath(url)) {
+    if ((0, is_ipfs_1.cidPath)(url)) {
         var res = url.match(cidRegex);
         return {
             cid: res[1],
@@ -66,14 +69,14 @@ export var digestPath = function (url) {
         };
     }
     // In case of a single CID
-    if (cid(url))
+    if ((0, is_ipfs_1.cid)(url))
         return {
             cid: url,
             subpath: '',
             isIPFS: true
         };
     // In case of a single CID
-    if (base32cid(url))
+    if ((0, is_ipfs_1.base32cid)(url))
         return {
             cid: url,
             subpath: '',
@@ -86,3 +89,4 @@ export var digestPath = function (url) {
         isIPFS: false
     };
 };
+exports.digestPath = digestPath;

@@ -36,29 +36,31 @@ The service to fetch Images and JSON(Metadata) files work decoupling the URL/CID
 ## Installation
 
 First install package on your project:
-```
+```bash
 npm install -s ipfs-public-fetcher
 ```
 
 Then use package as you want:
-```
-import IPFSFetcher from 'ipfs-public-fetcher'
+```js
+import {Initialize, FetchJSON, FetchContent, IsConnected} from 'ipfs-public-fetcher'
 ```
 
 ## Usage
 
 First is needed to initialze the package to connect peers:
 
-**Initialize(customDomains)**: The initializer function to fetch domains. It is possible to select custom domains to fetch from just passing a js file that contains an array of strings. 
+**Initialize(customDomains)**: The initializer function to fetch domains. It is possible to select custom domains to fetch from just passing a js file that contains an array of strings. By default the module prevent app from initialize multiple times to prevent spam in hot-reloads. If you want to force it to re-initialize use 
 
+- forceInitialize: The module will not initialize twice unless you force it.
+- verbose: Show additional logs for connection/fetch content
 - customDomains: A object or module containing a list of domains.
-```
-const domains = [
+```ts
+const customDomains = [
   "https://ipfs.io/ipfs/:hash",
 	"https://dweb.link/ipfs/:hash",
 ]
 
-IPFSFetcher.Initialize(domains)
+Initialize({customDomains})
 ```
 
 After that, we feature two different ways to fetch data:
@@ -66,15 +68,20 @@ After that, we feature two different ways to fetch data:
 **FetchJSON(cid)**: A function to grab a JSON file from IPFS from fastest public gateway. Return a valid Object related to JSON fetched.
 
 - cid: A valid IPFS cid or IPFS path. 
-```
-const json = await IPFSFetcher.FetchJSON('bafybe...sk3m')
+```ts
+const json = await FetchJSON('bafybe...sk3m')
 ```
 
 **FetchContent(cid)**: A function to grab general content/media. It returns a valid path to render on content tags.
 
 - cid: A valid IPFS cid or IPFS path. 
+```ts
+const contentPath = await FetchContent('bafybe...sk3m')
 ```
-const contentPath = await IPFSFetcher.FetchContent('bafybe...sk3m')
+
+**IsConnected()**: A function to verify connection at any moment.
+```ts
+const connected = IsConnected()
 ```
 
 ## References:

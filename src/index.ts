@@ -7,8 +7,15 @@ import {
 
 let instance:IPFSFetcher|undefined = undefined;
 
-export const Initialize = async (options: IPFSFetcherOptions) => {
-    instance = new IPFSFetcher(options);
+export const Initialize = async (options?: IPFSFetcherOptions) => {
+    // Only initialize in cases where isn't initialized yet
+    // Or in cases where is initialized and connected but forced to reinitialize
+    if (instance == undefined || (instance?.ipfsConnected && options?.forceInitialize))
+        instance = new IPFSFetcher(options);
+}
+
+export const IsConnected = () => {
+    return instance?.ipfsConnected
 }
 
 // Wait for gateway connections before try fetch any content 
@@ -33,7 +40,7 @@ class IPFSFetcher {
     // True when verbosity is enabled to check errors
     verbose = false
 
-    constructor(options: IPFSFetcherOptions) {
+    constructor(options?: IPFSFetcherOptions) {
         this.gatewaysFetched = []
         if (options?.verbose) this.verbose = true;
         if (this.verbose) console.log('-- IPFS Starting connection process --');
@@ -41,9 +48,10 @@ class IPFSFetcher {
         domains.forEach( gatewayPath => {
             const dateBefore = Date.now()
             // Test each gateway against a 5sec timeout
+            let timeout;
             Promise.any([
                 fetch(gatewayPath.replace(':hash', 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'), {mode: 'cors', method:'HEAD'}),
-                new Promise( (resolve, reject) => { setTimeout(reject, 5000) })
+                new Promise( (resolve, reject) => { timeout = setTimeout(reject, 5000) })
             ]).then( (response:Response) => {
                 if (
                     // Fetch returned successfully
@@ -52,8 +60,10 @@ class IPFSFetcher {
                     // TODO This line was commented due to apparently there are not so much public domains that uses subdomains
                     // customDomains ? true : isIPFS.ipfsSubdomain(response.url)
                 ) {
+                    clearTimeout(timeout)
                     return;
                 } else {
+                    clearTimeout(timeout)
                     throw Error(response.statusText);
                 }
             })
@@ -69,6 +79,7 @@ class IPFSFetcher {
                 }
             })
             .catch( (err) => {
+                clearTimeout(timeout)
                 if (this.verbose) console.log('Failed to fetch gateway or Path based Gateway', gatewayPath)
             })
         })
@@ -92,7 +103,7 @@ class PathResolver {
     async fetch () {
         return new Promise<string>( (resolve,reject) => {
             // Fetch digested path from best gateways
-            fetch(this.gatewayPath, {method: 'HEAD'})
+            fetch(this.gatewayPath, {method: 'HEAD', signal: this.signal})
             .then( (r) => {
                 // If fetched return as soon as possible
                 if (r.ok) {
@@ -103,7 +114,7 @@ class PathResolver {
             })
             .catch( (err:any) => {
                 if (err.name === 'AbortError') {
-                    // console.log('Aborted request', this.gateway.path)
+                    // console.log('Aborted request', this.gatewayPath)
                 } else if (this.gateway && err.code && err.code != 20){
                     this.gateway.errors++
                 }
@@ -141,7 +152,7 @@ class PersistentFetcher {
     async fetch () {
         this.tries = 0;
         this.found = undefined;
-        while(!this.found && this.tries < 5){
+        while(!this.found && this.tries < 3){
             // Se a timeout reference for clear it at the end
             let timeout
             // Racing the promises for tries
@@ -164,6 +175,7 @@ class PersistentFetcher {
             ).then( (res:null | string) => {
                 // Start clearing the timeout
                 this.resolvers.forEach((r) => r.kill())
+                this.resolvers = []
                 clearTimeout(timeout);
                 // In case of a successful returned result, set found variable
                 if (res) this.found = res;

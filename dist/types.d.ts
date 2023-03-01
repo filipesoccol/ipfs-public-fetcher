@@ -1,6 +1,7 @@
 export type IPFSFetcherOptions = {
-    customDomains: string[];
-    verbose: boolean;
+    customDomains?: string[];
+    verbose?: boolean;
+    forceInitialize?: boolean;
 };
 export type IPFSGateway = {
     path: string;

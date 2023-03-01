@@ -1,3 +1,27 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -34,15 +58,28 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import sourceDomains from './domains';
-import * as Utilities from './utilities';
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+exports.__esModule = true;
+exports.FetchJSON = exports.FetchContent = exports.IsConnected = exports.Initialize = void 0;
+var domains_1 = __importDefault(require("./domains"));
+var Utilities = __importStar(require("./utilities"));
 var instance = undefined;
-export var Initialize = function (options) { return __awaiter(void 0, void 0, void 0, function () {
+var Initialize = function (options) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        instance = new IPFSFetcher(options);
+        // Only initialize in cases where isn't initialized yet
+        // Or in cases where is initialized and connected but forced to reinitialize
+        if (instance == undefined || ((instance === null || instance === void 0 ? void 0 : instance.ipfsConnected) && (options === null || options === void 0 ? void 0 : options.forceInitialize)))
+            instance = new IPFSFetcher(options);
         return [2 /*return*/];
     });
 }); };
+exports.Initialize = Initialize;
+var IsConnected = function () {
+    return instance === null || instance === void 0 ? void 0 : instance.ipfsConnected;
+};
+exports.IsConnected = IsConnected;
 // Wait for gateway connections before try fetch any content 
 var waitLoop = function (callback) {
     // If connected return
@@ -68,13 +105,14 @@ var IPFSFetcher = /** @class */ (function () {
             this.verbose = true;
         if (this.verbose)
             console.log('-- IPFS Starting connection process --');
-        var domains = (options === null || options === void 0 ? void 0 : options.customDomains) ? options.customDomains : sourceDomains;
+        var domains = (options === null || options === void 0 ? void 0 : options.customDomains) ? options.customDomains : domains_1["default"];
         domains.forEach(function (gatewayPath) {
             var dateBefore = Date.now();
             // Test each gateway against a 5sec timeout
+            var timeout;
             Promise.any([
                 fetch(gatewayPath.replace(':hash', 'bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m'), { mode: 'cors', method: 'HEAD' }),
-                new Promise(function (resolve, reject) { setTimeout(reject, 5000); })
+                new Promise(function (resolve, reject) { timeout = setTimeout(reject, 5000); })
             ]).then(function (response) {
                 if (
                 // Fetch returned successfully
@@ -83,9 +121,11 @@ var IPFSFetcher = /** @class */ (function () {
                 // TODO This line was commented due to apparently there are not so much public domains that uses subdomains
                 // customDomains ? true : isIPFS.ipfsSubdomain(response.url)
                 ) {
+                    clearTimeout(timeout);
                     return;
                 }
                 else {
+                    clearTimeout(timeout);
                     throw Error(response.statusText);
                 }
             })
@@ -102,6 +142,7 @@ var IPFSFetcher = /** @class */ (function () {
                     _this.ipfsConnected = true;
                 }
             })["catch"](function (err) {
+                clearTimeout(timeout);
                 if (_this.verbose)
                     console.log('Failed to fetch gateway or Path based Gateway', gatewayPath);
             });
@@ -122,7 +163,7 @@ var PathResolver = /** @class */ (function () {
             return __generator(this, function (_a) {
                 return [2 /*return*/, new Promise(function (resolve, reject) {
                         // Fetch digested path from best gateways
-                        fetch(_this.gatewayPath, { method: 'HEAD' })
+                        fetch(_this.gatewayPath, { method: 'HEAD', signal: _this.signal })
                             .then(function (r) {
                             // If fetched return as soon as possible
                             if (r.ok) {
@@ -132,7 +173,7 @@ var PathResolver = /** @class */ (function () {
                             throw new Error('Error fetching content');
                         })["catch"](function (err) {
                             if (err.name === 'AbortError') {
-                                // console.log('Aborted request', this.gateway.path)
+                                // console.log('Aborted request', this.gatewayPath)
                             }
                             else if (_this.gateway && err.code && err.code != 20) {
                                 _this.gateway.errors++;
@@ -189,6 +230,7 @@ var PersistentFetcher = /** @class */ (function () {
                                         }))).then(function (res) {
                                             // Start clearing the timeout
                                             _this.resolvers.forEach(function (r) { return r.kill(); });
+                                            _this.resolvers = [];
                                             clearTimeout(timeout);
                                             // In case of a successful returned result, set found variable
                                             if (res)
@@ -213,7 +255,7 @@ var PersistentFetcher = /** @class */ (function () {
                         this_1 = this;
                         _a.label = 1;
                     case 1:
-                        if (!(!this.found && this.tries < 5)) return [3 /*break*/, 3];
+                        if (!(!this.found && this.tries < 3)) return [3 /*break*/, 3];
                         return [5 /*yield**/, _loop_1()];
                     case 2:
                         _a.sent();
@@ -233,7 +275,7 @@ var PersistentFetcher = /** @class */ (function () {
     return PersistentFetcher;
 }());
 // Fetch fastest IPFS gateway url for the desired content 
-export var FetchContent = function (path) { return __awaiter(void 0, void 0, void 0, function () {
+var FetchContent = function (path) { return __awaiter(void 0, void 0, void 0, function () {
     var digested, fetcher;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -254,12 +296,13 @@ export var FetchContent = function (path) { return __awaiter(void 0, void 0, voi
         }
     });
 }); };
+exports.FetchContent = FetchContent;
 // Fetch a JSON formatted doc from fastest IPFS gateways connected
-export var FetchJSON = function (path) { return __awaiter(void 0, void 0, void 0, function () {
+var FetchJSON = function (path) { return __awaiter(void 0, void 0, void 0, function () {
     var newPath;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, FetchContent(path)];
+            case 0: return [4 /*yield*/, (0, exports.FetchContent)(path)];
             case 1:
                 newPath = _a.sent();
                 return [2 /*return*/, new Promise(function (resolve) {
@@ -270,3 +313,4 @@ export var FetchJSON = function (path) { return __awaiter(void 0, void 0, void 0
         }
     });
 }); };
+exports.FetchJSON = FetchJSON;
