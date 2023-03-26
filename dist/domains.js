@@ -9,9 +9,7 @@ exports["default"] = [
     "https://cloudflare-ipfs.com/ipfs/:hash",
     "https://nftstorage.link/ipfs/:hash",
     "https://api.estuary.tech/gw/ipfs/:hash",
-    "https://strn.pl/ipfs/:hash",
     "https://ipfs.eth.aragon.network/ipfs/:hash",
-    "https://ipfs.joaoleitao.org/ipfs/:hash",
     "https://gateway.pinata.cloud/ipfs/:hash",
     "https://4everland.io/ipfs/:hash",
 ];
