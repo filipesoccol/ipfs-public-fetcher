@@ -6,55 +6,48 @@
 
 <h3 align="center">IPFS Public Gateway Fetcher</h3>
 
-### Load any IPFS content from the fastest gateway available just passing a valid path.
+IPFS Public Gateway Fetcher is a component that helps you fetch IPFS content without needing to set or configure any gateway. It automatically selects the fastest and most suitable gateways from the Protocol Labs' public gateway list and connects to them to fetch the content. If it fails to fetch data from a gateway multiple times, it removes that gateway from the list and selects another one.
 
-The component itself verify for you the fastest suitable gateways from the Public Gateways list provided by Protocol Labs.
+## Features
 
-Once you have successfully connected to at least 3 of them, the content will show up automatically.
+- Automatically selects the fastest and most suitable gateways to fetch IPFS content.
+- Supports various types of IPFS content, including paths with CIDv0 and CIDv1, IPFS protocol paths, pre-filled IPFS gateway paths, CIDv1 with subdomain paths, and non-IPFS URLs.
+- Verifies if the passed URL/CID/Path is a valid IPFS link.
+- Supports fetching JSON metadata files and images.
+- Allows customization of gateways by passing a JS file containing an array of strings.
+- Provides an initializer function to connect to peers and fetch domains.
+- Provides a function to check if the connection is established.
 
-This component will help to fetch media from IPFS without needing to set or configure any gateway, no need for pass correct CID as parameter. It grabs the data directly from the fastest responding Gateways. In case it failed to fetch data from the gateways multiple time, this source will be removed from the list and another one will take it's place. 
+## Live Demo
 
-The service to fetch Images and JSON(Metadata) files work decoupling the URL/CID/Path passed ad check if is a valid IPFS link. In case of succeded fetch for CID and subpaths, it uses the better gateway possible to fetch content. In case of succeded feching from one of the best gateways it returns immediatelly. Otherwise it will fallback to the URL previously passed.
+You can check out the live demo of the Vue implementation of IPFS Public Gateway Fetcher [here](https://filipesoccol.github.io/vue-ipfs-components-demo/), and the repository [here](https://github.com/filipesoccol/vue-ipfs-components-demo).
 
-[Live Demo Vue](https://filipesoccol.github.io/vue-ipfs-components-demo/) / [Live Demo Repo Vue](https://github.com/filipesoccol/vue-ipfs-components-demo)
+## Roadmap to V1
 
-## Sources for media supported includes:
+Here's what we plan to add to IPFS Public Gateway Fetcher:
 
-- [x] Path with CIDv0 only: Qm...
-- [x] Path with CIDv1 only: bafy...
-- [x] IPFS protocol path: ipfs://...
-- [x] Pre-filled IPFS gateway path: https://ipfs.io/ipfs/...
-- [x] CIDv1 with subdomain path: https://bafy.../2.png
-- [x] Non IPFS URLs (Will fetch url itself.)
-
-## Roadmap to Beta
-- [x] Only uses gateways path to fetch content (CidV1)
-- [ ] Convert any CIDv0 to V1 and fethc using subdomains 
-- [ ] Improve conditions to consider IPFS connected
-- [ ] Improve conditions to discard a connected gateway
+- Improve the conditions for considering IPFS connected.
+- Improve the conditions for discarding a connected gateway.
+- Add a cache for sucessfuly fetche content.
 
 ## Installation
 
-First install package on your project:
+To install IPFS Public Gateway Fetcher in your project, run the following command:
+
 ```bash
 npm install -s ipfs-public-fetcher
 ```
 
-Then use package as you want:
+You can then use the package as follows:
+
 ```js
 import {Initialize, FetchJSON, FetchContent, IsConnected} from 'ipfs-public-fetcher'
 ```
 
 ## Usage
+To use IPFS Public Gateway Fetcher, you need to first initialize the package to connect peers:
 
-First is needed to initialze the package to connect peers:
-
-**Initialize(customDomains)**: The initializer function to fetch domains. It is possible to select custom domains to fetch from just passing a js file that contains an array of strings. By default the module prevent app from initialize multiple times to prevent spam in hot-reloads. If you want to force it to re-initialize use 
-
-- forceInitialize: The module will not initialize twice unless you force it.
-- verbose: Show additional logs for connection/fetch content
-- customDomains: A object or module containing a list of domains.
-```ts
+```js
 const customDomains = [
   "https://ipfs.io/ipfs/:hash",
 	"https://dweb.link/ipfs/:hash",
@@ -63,29 +56,21 @@ const customDomains = [
 Initialize({customDomains})
 ```
 
-After that, we feature two different ways to fetch data:
+After that, you can fetch data in two different ways:
 
-**FetchJSON(cid)**: A function to grab a JSON file from IPFS from fastest public gateway. Return a valid Object related to JSON fetched.
-
-- cid: A valid IPFS cid or IPFS path. 
-```ts
+```js
 const json = await FetchJSON('bafybe...sk3m')
-```
-
-**FetchContent(cid)**: A function to grab general content/media. It returns a valid path to render on content tags.
-
-- cid: A valid IPFS cid or IPFS path. 
-```ts
 const contentPath = await FetchContent('bafybe...sk3m')
 ```
 
-**IsConnected()**: A function to verify connection at any moment.
-```ts
+You can also verify the connection status at any moment using the following function:
+
+```js
 const connected = IsConnected()
 ```
 
-## References:
+## References
 
 - Protocol-Labs public gateway list: [Website](https://ipfs.github.io/public-gateway-checker/) / [Repo](https://github.com/ipfs/public-gateway-checker/blob/master/src/gateways.json)
+- ConsenSys article related to Gateways security: [Link](https://consensys.net/diligence/blog/2021/06/ipfs-gateway-security/)
 
-- Consensys article related to Gateways security: [Link](https://consensys.net/diligence/blog/2021/06/ipfs-gateway-security/)
