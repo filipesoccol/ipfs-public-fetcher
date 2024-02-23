@@ -136,7 +136,7 @@ var IPFSFetcher = /** @class */ (function () {
                 if (_this.verbose)
                     console.log('Gateway connected: ', _this.gatewaysFetched.length, '-', gatewayPath);
                 // If more than 3 gateways have succeded, then consider IPFS connected and ready
-                if (_this.gatewaysFetched.length > 1 && !_this.ipfsConnected) {
+                if (_this.gatewaysFetched.length > (options.minimumGateways || 0) && !_this.ipfsConnected) {
                     if (_this.verbose)
                         console.log('-- IPFS Connected to enough gateways --');
                     _this.ipfsConnected = true;

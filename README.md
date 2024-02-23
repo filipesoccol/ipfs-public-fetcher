@@ -41,36 +41,63 @@ npm install -s ipfs-public-fetcher
 You can then use the package as follows:
 
 ```js
-import {Initialize, FetchJSON, FetchContent, IsConnected} from 'ipfs-public-fetcher'
+import {
+  Initialize,
+  FetchJSON,
+  FetchContent,
+  IsConnected,
+} from "ipfs-public-fetcher";
 ```
 
 ## Usage
+
 To use IPFS Public Gateway Fetcher, you need to first initialize the package to connect peers:
+
+```js
+Initialize();
+```
+
+#### Options
+
+You can use different parameters to configure the plugin
+
+- **customDomains**: Customize domains to try connection.
 
 ```js
 const customDomains = [
   "https://ipfs.io/ipfs/:hash",
-	"https://dweb.link/ipfs/:hash",
-]
+  "https://dweb.link/ipfs/:hash",
+];
 
-Initialize({customDomains})
+Initialize({ customDomains });
+```
+
+- **verbose**: Log consoles in a verbose way. Use it to debug.
+- **forceInitialize**: Force initialize even on hot reload during development phase.
+- **minimumGateways**: Minimum number of gateways to connect before consider it connected. Default to 0.
+
+```js
+Initialize({
+  verbose: true,
+  forceInitialize: true,
+  minimumGateways: 1,
+});
 ```
 
 After that, you can fetch data in two different ways:
 
 ```js
-const json = await FetchJSON('bafybe...sk3m')
-const contentPath = await FetchContent('bafybe...sk3m')
+const json = await FetchJSON("bafybe...sk3m");
+const contentPath = await FetchContent("bafybe...sk3m");
 ```
 
 You can also verify the connection status at any moment using the following function:
 
 ```js
-const connected = IsConnected()
+const connected = IsConnected();
 ```
 
 ## References
 
 - Protocol-Labs public gateway list: [Website](https://ipfs.github.io/public-gateway-checker/) / [Repo](https://github.com/ipfs/public-gateway-checker/blob/master/src/gateways.json)
 - ConsenSys article related to Gateways security: [Link](https://consensys.net/diligence/blog/2021/06/ipfs-gateway-security/)
-

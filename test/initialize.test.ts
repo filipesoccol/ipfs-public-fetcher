@@ -1,7 +1,7 @@
 // const {server1, server2} = require('./mockServers');
 // const {Initialize, IsConnected, FetchContent} = require('../src')
 import { server1, server2 } from "./mockServers"
-import {Initialize, IsConnected, FetchContent} from "../src"
+import { Initialize, IsConnected, FetchContent } from "../src"
 
 describe('Testing Initialize using two mock domains', () => {
   let app1, app2;
@@ -40,10 +40,12 @@ describe('Testing Initialize using two mock domains', () => {
 
   test('Should run and detect connection after some time', async () => {
     await Initialize(
-      {customDomains: [
-      `${app1}:hash`,
-      `${app2}:hash`
-      ]})
+      {
+        customDomains: [
+          `${app1}:hash`,
+          `${app2}:hash`
+        ]
+      })
     await new Promise((resolve) => setTimeout(resolve, 10))
     expect(IsConnected()).toBe(true);
   });
@@ -51,7 +53,7 @@ describe('Testing Initialize using two mock domains', () => {
   test('Will check response delay.', async () => {
     const before = performance.now()
     const content = await FetchContent('bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m/delay500.png')
-    expect(performance.now()-before).toBeGreaterThan(500)
+    expect(performance.now() - before).toBeGreaterThan(500)
     expect(content).toBe(`${app2}bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m/delay500.png`)
   });
 
